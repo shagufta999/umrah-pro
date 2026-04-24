@@ -579,14 +579,14 @@ def create_agent_credentials(agent_id, username, password):
         conn = sqlite3.connect('umrah_pro.db')
         c = conn.cursor()
         
-        # Ensure table exists
+        # Ensure table exists with ALL 6 columns
         c.execute('''CREATE TABLE IF NOT EXISTS agent_credentials
                      (credential_id TEXT PRIMARY KEY,
                       agent_id TEXT UNIQUE NOT NULL,
                       username TEXT UNIQUE NOT NULL,
                       password_hash TEXT NOT NULL,
                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                      last_login TIMESTAMP)''')
+                      last_login TIMESTAMP)''')  # ← 6 columns total
         
         # Check if agent exists in agent_partners
         c.execute('SELECT agent_id FROM agent_partners WHERE agent_id=?', (agent_id,))
@@ -607,10 +607,11 @@ def create_agent_credentials(agent_id, username, password):
         # Create credentials
         credential_id = str(uuid.uuid4())
         
+        # INSERT with ALL 6 values (including NULL for last_login)
         c.execute('''INSERT INTO agent_credentials
-                     (credential_id, agent_id, username, password_hash, created_at)
-                     VALUES (?,?,?,?,?)''',
-                  (credential_id, agent_id, username, password_hash, datetime.now()))
+                     (credential_id, agent_id, username, password_hash, created_at, last_login)
+                     VALUES (?,?,?,?,?,?)''',  # ← 6 placeholders
+                  (credential_id, agent_id, username, password_hash, datetime.now(), None))  # ← 6 values
         
         conn.commit()
         
@@ -643,7 +644,6 @@ def create_agent_credentials(agent_id, username, password):
     finally:
         if conn:
             conn.close()
-
 
 def get_agent_info(agent_id):
     """Get detailed agent information with error handling"""
